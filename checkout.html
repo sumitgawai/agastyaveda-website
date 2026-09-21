@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agastyaveda | Checkout</title><link rel="stylesheet" href="styles.css"></head>
+<body class="portal-body">
+  <header class="portal-header"><div class="container portal-nav"><a class="brand" href="/"><span class="brand-mark">✦</span><span><strong>agastyaveda</strong><small>AYURVEDIC WELLNESS</small></span></a><a class="text-link" href="/#shop">Continue shopping <span>→</span></a></div></header>
+  <main class="checkout-page container">
+    <div><p class="eyebrow">A considered delivery</p><h1>Complete your<br><em>order.</em></h1>
+      <div class="portal-card"><p class="eyebrow">Payment</p><h2>Payment is under development</h2><p>Submit your delivery details and we will contact you personally to confirm your order, availability, delivery and payment.</p></div>
+      <form id="checkout-form" class="checkout-form"><h2>Delivery details</h2>
+        <div class="form-grid"><label>Full name<input required name="name" autocomplete="name"></label><label>Email<input required type="email" name="email" autocomplete="email"></label></div>
+        <label>Address line<input required name="line1" autocomplete="street-address"></label>
+        <div class="form-grid three"><label>City<input required name="city"></label><label>State<input required name="state"></label><label>PIN code<input required name="postalCode" inputmode="numeric" pattern="[0-9]{6}"></label></div>
+        <label>Phone number<input required name="phone" type="tel" autocomplete="tel"></label>
+        <div class="map-picker"><div><h3>Pin your delivery location</h3><p>Choose your current location, open Google Maps to pick the place, or enter coordinates from a map pin.</p><div class="map-actions"><button type="button" id="use-location" class="button button-outline">Use my current location</button><a class="button button-quiet" href="https://www.google.com/maps" target="_blank" rel="noreferrer">Choose on Google Maps ↗</a></div><div class="form-grid"><label>Latitude<input required name="latitude" id="latitude" type="number" step="any" placeholder="18.5204"></label><label>Longitude<input required name="longitude" id="longitude" type="number" step="any" placeholder="73.8567"></label></div></div><div id="interactive-map" style="display:none;min-height:280px"></div><iframe id="map" title="Delivery location map" loading="lazy" src="https://www.google.com/maps?q=Pune%20Maharashtra&output=embed"></iframe></div>
+        <p id="checkout-status" class="portal-status"></p><button class="button" type="submit">Submit order request <span>↗</span></button>
+      </form>
+    </div>
+    <aside class="checkout-summary"><p class="eyebrow">Your order</p><div id="summary-items"></div><div class="summary-line"><span>Subtotal</span><strong id="subtotal">₹0</strong></div><div class="summary-line"><span>Delivery</span><strong id="shipping">₹0</strong></div><div class="summary-total"><span>Total</span><strong id="total">₹0</strong></div><p class="summary-note">Free delivery on orders above ₹1,500.</p></aside>
+  </main>
+  <script>
+    const cart=JSON.parse(localStorage.getItem("agastyaveda-cart")||"[]"), money=value=>`₹${Number(value).toLocaleString("en-IN")}`;
+    const subtotal=cart.reduce((sum,item)=>sum+Number(item.price||0)*Number(item.quantity||1),0), shipping=subtotal>=1500||!subtotal?0:80;
+    document.querySelector("#summary-items").innerHTML=cart.length?cart.map(item=>`<div class="summary-item"><span>${item.name} × ${item.quantity||1}</span><strong>${money(Number(item.price||0)*Number(item.quantity||1))}</strong></div>`).join(""):'<p class="empty-portal">Your bag is empty.</p>';
+    document.querySelector("#subtotal").textContent=money(subtotal);document.querySelector("#shipping").textContent=shipping?money(shipping):"Free";document.querySelector("#total").textContent=money(subtotal+shipping);
+    let interactiveMap,marker;
+    const setMap=()=>{const latitude=Number(document.querySelector("#latitude").value),longitude=Number(document.querySelector("#longitude").value);if(!latitude||!longitude)return;document.querySelector("#map").src=`https://www.google.com/maps?q=${latitude},${longitude}&output=embed`;if(interactiveMap&&marker){const position={lat:latitude,lng:longitude};marker.setPosition(position);interactiveMap.setCenter(position)}};
+    function initInteractiveMap(){const fallback={lat:18.5204,lng:73.8567};interactiveMap=new google.maps.Map(document.querySelector("#interactive-map"),{center:fallback,zoom:13});marker=new google.maps.Marker({position:fallback,map:interactiveMap,draggable:true});marker.addListener("dragend",()=>{const position=marker.getPosition();document.querySelector("#latitude").value=position.lat().toFixed(6);document.querySelector("#longitude").value=position.lng().toFixed(6);setMap()});document.querySelector("#interactive-map").style.display="block";document.querySelector("#map").style.display="none"}
+    fetch("/api/config").then(response=>response.json()).then(settings=>{if(!settings.googleMapsApiKey)return;const script=document.createElement("script");script.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(settings.googleMapsApiKey)}&callback=initInteractiveMap`;script.async=true;script.defer=true;document.head.appendChild(script)}).catch(()=>{});
+    document.querySelector("#use-location").onclick=()=>navigator.geolocation.getCurrentPosition(position=>{document.querySelector("#latitude").value=position.coords.latitude;document.querySelector("#longitude").value=position.coords.longitude;setMap();document.querySelector("#checkout-status").textContent="Location pinned successfully."},()=>document.querySelector("#checkout-status").textContent="Location permission was not available. Please use the address fields.");
+    document.querySelector("#latitude").onchange=document.querySelector("#longitude").onchange=setMap;
+    document.querySelector("#checkout-form").onsubmit=async event=>{event.preventDefault();const status=document.querySelector("#checkout-status");if(!cart.length){status.textContent="Your bag is empty.";return}const data=Object.fromEntries(new FormData(event.target));if(!data.latitude||!data.longitude){status.textContent="Please pin your delivery location before continuing.";return}const response=await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:data.email,address:{...data},items:cart.map(item=>({name:item.name,productId:item.productId,quantity:Number(item.quantity||1)}))})});const result=await response.json();if(!response.ok){status.textContent=result.error||"Unable to submit order.";return}localStorage.removeItem("agastyaveda-cart");status.textContent=`Order ${result.order._id} received. We will contact you personally to complete the order.`;event.target.querySelector("button[type=submit]").disabled=true};
+  </script>
+</body>
+</html>

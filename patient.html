@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agastyaveda | My wellness space</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="portal-body">
+  <header class="portal-header">
+    <div class="container portal-nav">
+      <a class="brand" href="/"><span class="brand-mark">✦</span><span><strong>agastyaveda</strong><small>AYURVEDIC WELLNESS</small></span></a>
+      <div class="portal-actions"><div id="user-button"></div><a class="text-link" href="/">Back to website <span>↗</span></a></div>
+    </div>
+  </header>
+  <main class="portal-main container">
+    <section class="portal-intro"><div><p class="eyebrow">Your wellness space</p><h1>Welcome back,<br /><em>take a breath.</em></h1><p>Everything you need for your care, in one calm place.</p></div><div class="portal-leaf">✽</div></section>
+    <section id="auth-panel" class="portal-auth" hidden><h2>Sign in to your wellness space</h2><p>Access your appointments, orders and consultation history securely.</p><button id="sign-in-button" class="button">Continue with Clerk <span>↗</span></button></section>
+    <section id="dashboard" hidden>
+      <div class="portal-stats" id="stats"></div>
+      <div class="portal-grid">
+        <section class="portal-card"><div class="portal-card-head"><div><p class="eyebrow">Your care</p><h2>Appointments</h2></div><a href="/#book" class="text-link">Book another <span>→</span></a></div><div id="appointments" class="portal-list"></div></section>
+        <section class="portal-card"><div class="portal-card-head"><div><p class="eyebrow">Your rituals</p><h2>Orders</h2></div><a href="/#shop" class="text-link">Visit shop <span>→</span></a></div><div id="orders" class="portal-list"></div></section>
+      </div>
+      <section class="portal-card care-note"><div><p class="eyebrow">A note for you</p><h2>Your care is a practice,<br /><em>not a performance.</em></h2></div><p>Small steps count. Return here whenever you need to revisit your upcoming care or continue a ritual that feels good.</p></section>
+      <div class="portal-grid portal-management">
+        <section class="portal-card"><div class="portal-card-head"><div><p class="eyebrow">Your details</p><h2>Profile</h2></div></div><form id="profile-form" class="portal-form"><div class="form-grid"><label>First name<input required name="firstName"></label><label>Last name<input required name="lastName"></label></div><div class="form-grid"><label>Phone<input required name="phone" type="tel"></label><label>Date of birth<input name="dateOfBirth" type="date"></label></div><button class="button" type="submit">Save profile</button><p id="profile-status" class="portal-status"></p></form></section>
+        <section class="portal-card"><div class="portal-card-head"><div><p class="eyebrow">Saved for delivery</p><h2>Addresses</h2></div></div><div id="addresses" class="portal-list"></div><button id="add-address" class="button button-outline" type="button">Add an address <span>+</span></button><form id="address-form" class="portal-form" hidden><label>Label<input required name="label" placeholder="Home"></label><label>Recipient name<input required name="name"></label><label>Address line<input required name="line1"></label><div class="form-grid"><label>City<input required name="city"></label><label>State<input required name="state"></label></div><div class="form-grid"><label>PIN code<input required name="postalCode" pattern="[0-9]{6}"></label><label>Phone<input required name="phone" type="tel"></label></div><div class="form-grid"><label>Latitude<input required name="latitude" type="number" step="any"></label><label>Longitude<input required name="longitude" type="number" step="any"></label></div><button class="button" type="submit">Save address</button><p id="address-status" class="portal-status"></p></form></section>
+        <section class="portal-card"><div class="portal-card-head"><div><p class="eyebrow">Your records</p><h2>Documents</h2></div></div><div id="documents" class="portal-list"></div><p class="portal-note">Documents are private and become available here when your care team uploads them.</p></section>
+      </div>
+    </section>
+    <p id="status" class="portal-status"></p>
+  </main>
+  <script>
+    const money = value => `₹${Number(value || 0).toLocaleString("en-IN")}`;
+    const date = value => value ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+    function showAuth(message) {
+      document.querySelector("#auth-panel").hidden = false;
+      if (message) document.querySelector("#auth-panel p").textContent = message;
+    }
+    function render(data) {
+      document.querySelector("#dashboard").hidden = false;
+      document.querySelector("#stats").innerHTML = `<div><span>Appointments</span><strong>${data.counts.appointments}</strong></div><div><span>Orders</span><strong>${data.counts.orders}</strong></div><div><span>Member since</span><strong>${date(data.appointments[0]?.createdAt) === "—" ? "Today" : date(data.appointments[data.appointments.length - 1]?.createdAt)}</strong></div>`;
+      document.querySelector("#appointments").innerHTML = data.appointments.length ? data.appointments.map(item => `<article class="portal-list-item"><div><strong>${date(item.date)}</strong><span>${item.time}</span></div><b class="status status-${item.status.toLowerCase()}">${item.status.replaceAll("_", " ")}</b></article>`).join("") : '<p class="empty-portal">No appointments yet. Your next step can start here.</p>';
+      document.querySelector("#orders").innerHTML = data.orders.length ? data.orders.map(item => `<article class="portal-list-item"><div><strong>Order ${String(item._id).slice(-6)}</strong><span>${date(item.createdAt)} · ${item.items?.length || 0} item(s)</span></div><b>${money(item.amount)}</b></article>`).join("") : '<p class="empty-portal">Your orders will appear here when you begin your ritual.</p>';
+    }
+    async function loadManagement() {
+      const [profileResponse, addressesResponse, documentsResponse] = await Promise.all([fetch("/api/patient/profile"), fetch("/api/patient/addresses"), fetch("/api/patient/documents")]);
+      const profile = (await profileResponse.json()).profile;
+      const addresses = (await addressesResponse.json()).addresses;
+      const documents = (await documentsResponse.json()).documents;
+      const form = document.querySelector("#profile-form");
+      Object.entries(profile).forEach(([key, value]) => { if (form.elements[key]) form.elements[key].value = value || ""; });
+      document.querySelector("#addresses").innerHTML = addresses.length ? addresses.map(item => `<article class="portal-list-item"><div><strong>${item.label}</strong><span>${item.line1}, ${item.city}, ${item.state} ${item.postalCode}</span></div><b>Saved</b></article>`).join("") : '<p class="empty-portal">No saved addresses yet.</p>';
+      document.querySelector("#documents").innerHTML = documents.length ? documents.map(item => `<article class="portal-list-item"><div><strong>${item.title}</strong><span>${item.type} · ${date(item.createdAt)}</span></div><b>Private</b></article>`).join("") : '<p class="empty-portal">No documents available yet.</p>';
+      form.onsubmit = async event => { event.preventDefault(); const response = await fetch("/api/patient/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(form))) }); document.querySelector("#profile-status").textContent = response.ok ? "Profile saved." : (await response.json()).error; };
+      const addressForm = document.querySelector("#address-form");
+      document.querySelector("#add-address").onclick = () => { addressForm.hidden = !addressForm.hidden; };
+      addressForm.onsubmit = async event => { event.preventDefault(); const response = await fetch("/api/patient/addresses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(addressForm))) }); document.querySelector("#address-status").textContent = response.ok ? "Address saved." : (await response.json()).error; if (response.ok) loadManagement(); };
+    }
+    async function boot() {
+      const config = await (await fetch("/api/config")).json();
+      if (!config.clerkEnabled) {
+        const response = await fetch("/api/patient/overview");
+        render(await response.json());
+        await loadManagement();
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
+      script.async = true; script.crossOrigin = "anonymous"; script.setAttribute("data-clerk-publishable-key", config.clerkPublishableKey);
+      await new Promise((resolve, reject) => { script.onload = resolve; script.onerror = () => reject(new Error("Clerk failed to load.")); document.head.appendChild(script); });
+      await window.Clerk.load();
+      if (!window.Clerk.user) { showAuth(); document.querySelector("#sign-in-button").onclick = () => window.Clerk.redirectToSignIn({ afterSignInUrl: "/patient.html" }); return; }
+      const response = await fetch("/api/patient/overview");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load your dashboard.");
+      render(data);
+      await loadManagement();
+    }
+    boot().catch(error => { showAuth(error.message); });
+  </script>
+</body>
+</html>
