@@ -18,4 +18,21 @@ async function sendMail({ to, subject, text, html }) {
   return transport.sendMail({ from: config.mail.from, to, subject, text, html });
 }
 
-module.exports = { sendMail };
+async function sendAdminNotification({ subject, text, form }) {
+  const endpoint = config.formspree[form];
+  if (!endpoint) {
+    return sendMail({ to: config.adminAccessEmail, subject, text });
+  }
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ _subject: subject, message: text, recipient: config.adminAccessEmail })
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Formspree notification failed (${response.status}): ${detail.slice(0, 200)}`);
+  }
+  return { formspree: true };
+}
+
+module.exports = { sendMail, sendAdminNotification };

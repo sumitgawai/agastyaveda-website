@@ -5,7 +5,7 @@ const path = require("path");
 const { optionalAuth, requireAuth, requireAdmin } = require("./auth");
 const { config } = require("./config");
 const { store } = require("./db");
-const { sendMail } = require("./mail");
+const { sendMail, sendAdminNotification } = require("./mail");
 const { createPaymentOrder, verifyPaymentSignature, verifyWebhookSignature } = require("./payments");
 const { putPrivateObject, createPrivateDownloadUrl } = require("./storage");
 
@@ -75,14 +75,14 @@ function createApp() {
 
   app.post("/api/appointments", requireAuth, async (req, res, next) => {
     try {
-      const { date, time, email } = req.body;
-      if (!date || !time || !email) return res.status(400).json({ error: "Date, time and email are required." });
+      const { date, time, email, phone } = req.body;
+      if (!date || !time || !email || !phone) return res.status(400).json({ error: "Date, time, email and phone are required." });
       const schedule = await store("availability").findOne({ day: new Date(`${date}T00:00:00`).getDay() });
       if (schedule && (!schedule.enabled || time < schedule.start || time > schedule.end)) return res.status(409).json({ error: "That consultation time is outside clinic availability." });
       const appointments = store("appointments");
       if (await appointments.findOne({ date, time })) return res.status(409).json({ error: "That slot has already been booked." });
-      const appointment = await appointments.insert({ date, time, email, userId: req.auth.userId, fee: config.consultationFee, status: "REQUESTED", createdAt: new Date().toISOString() });
-      await sendMail({ to: config.adminAccessEmail, subject: "New Agastyaveda appointment request", text: `Appointment requested for ${date} at ${time}.\nPatient email: ${email}\nUser ID: ${req.auth.userId}` });
+      const appointment = await appointments.insert({ date, time, email, phone, userId: req.auth.userId, fee: config.consultationFee, status: "REQUESTED", createdAt: new Date().toISOString() });
+      await sendAdminNotification({ form: "appointmentsEndpoint", subject: "New Agastyaveda appointment request", text: `Appointment requested for ${date} at ${time}.\nPatient email: ${email}\nPatient phone: ${phone}\nUser ID: ${req.auth.userId}` });
       await sendMail({ to: email, subject: "Agastyaveda appointment request received", text: `We received your requested appointment for ${date} at ${time}. Our team will contact you personally to confirm the consultation.` });
       res.status(201).json({ appointment, paymentAvailable: false });
     } catch (error) { next(error); }
@@ -114,7 +114,7 @@ function createApp() {
     try {
       const { items, email, address } = req.body;
       if (!Array.isArray(items) || !items.length || !email || !address) return res.status(400).json({ error: "Items, email and address are required." });
-      if (typeof address !== "object" || !address.name || !address.line1 || !address.city || !address.state || !address.postalCode || !address.latitude || !address.longitude) return res.status(400).json({ error: "Complete delivery details and map location are required." });
+      if (typeof address !== "object" || !address.name || !address.line1 || !address.city || !address.state || !address.postalCode || !address.phone || !address.latitude || !address.longitude) return res.status(400).json({ error: "Complete delivery details, phone number and map location are required." });
       const products = await store("products").findMany({ published: true });
       const lineItems = items.map((item) => {
         const product = products.find((entry) => String(entry._id) === String(item.productId) || entry.name === item.name);
@@ -127,7 +127,7 @@ function createApp() {
       const order = await store("orders").insert({ userId: req.auth.userId, email, address, items: lineItems, subtotal, shipping, amount, status: "ORDER_RECEIVED", createdAt: new Date().toISOString() });
       const summary = lineItems.map((item) => `${item.name} x ${item.quantity} — ₹${item.price * item.quantity}`).join("\n");
       const details = `Order ID: ${order._id}\nCustomer email: ${email}\nName: ${address.name}\nPhone: ${address.phone}\nAddress: ${address.line1}, ${address.city}, ${address.state} - ${address.postalCode}\nMap coordinates: ${address.latitude}, ${address.longitude}\n\nItems:\n${summary}\n\nSubtotal: ₹${subtotal}\nDelivery: ${shipping ? `₹${shipping}` : "Free"}\nTotal: ₹${amount}`;
-      await sendMail({ to: config.adminAccessEmail, subject: `New Agastyaveda order ${order._id}`, text: details });
+      await sendAdminNotification({ form: "ordersEndpoint", subject: `New Agastyaveda order ${order._id}`, text: details });
       await sendMail({ to: email, subject: "Agastyaveda order received", text: `Thank you. We received order ${order._id}. Our team will contact you personally to confirm availability, delivery, and payment.\n\n${details}` });
       res.status(201).json({ order, paymentAvailable: false });
     } catch (error) { next(error); }
@@ -138,7 +138,7 @@ function createApp() {
       const { name, email, message } = req.body;
       if (!name || !email || !message) return res.status(400).json({ error: "Name, email and message are required." });
       await store("messages").insert({ name, email, message, createdAt: new Date().toISOString(), status: "NEW" });
-      await sendMail({ to: config.adminAccessEmail, subject: `New Agastyaveda message from ${name}`, text: `${message}\n\nReply to: ${email}` });
+      await sendAdminNotification({ form: "messagesEndpoint", subject: `New Agastyaveda message from ${name}`, text: `${message}\n\nReply to: ${email}` });
       res.status(201).json({ received: true });
     } catch (error) { next(error); }
   });

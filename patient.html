@@ -59,6 +59,7 @@
       addressForm.onsubmit = async event => { event.preventDefault(); const response = await fetch("/api/patient/addresses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(addressForm))) }); document.querySelector("#address-status").textContent = response.ok ? "Address saved." : (await response.json()).error; if (response.ok) loadManagement(); };
     }
     async function boot() {
+      if (new URLSearchParams(location.search).get("auth") === "success") document.querySelector("#status").textContent = "Sign in successful. Welcome to your space.";
       const config = await (await fetch("/api/config")).json();
       if (!config.clerkEnabled) {
         const response = await fetch("/api/patient/overview");

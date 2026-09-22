@@ -155,7 +155,8 @@ document.querySelector("#booking-form").addEventListener("submit", (event) => {
   const payload = {
     date: document.querySelector("#date-input").value,
     time: event.target.querySelector("select").value,
-    email: event.target.querySelector('input[type="email"]').value
+    email: event.target.querySelector('input[type="email"]').value,
+    phone: event.target.querySelector('input[type="tel"]').value
   };
   fetch("/api/appointments", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)

@@ -110,6 +110,18 @@ Admins can add and edit product name, description, category, price, stock, pack 
 
 Razorpay is intentionally hidden and disabled. Checkout creates an `ORDER_RECEIVED` request, sends the complete order and delivery details to `ADMIN_EMAIL`, and sends a confirmation to the customer. The team contacts the customer personally for payment and delivery confirmation. When Razorpay is introduced later, set `RAZORPAY_ENABLED=true`, add the three Razorpay secrets, restore a payment UI, and test the verified callback and webhook lifecycle in staging first.
 
+### Formspree notifications
+
+Create three Formspree forms and add their endpoints in the local `.env` file or Railway service Variables:
+
+```env
+FORMSPREE_MESSAGES_ENDPOINT=https://formspree.io/f/messages-form-id
+FORMSPREE_APPOINTMENTS_ENDPOINT=https://formspree.io/f/appointments-form-id
+FORMSPREE_ORDERS_ENDPOINT=https://formspree.io/f/orders-form-id
+```
+
+Use the messages form for contact notes, the appointments form for appointment requests, and the orders form for order requests. Set each Formspree recipient to `agastyaaveda@gmail.com`, then redeploy Railway. If an endpoint is empty, that notification uses the existing SMTP admin-email fallback. Customer confirmation emails continue to use SMTP.
+
 ## Railway deployment
 
 The repository includes [railway.toml](./railway.toml) with the Node start command and `/api/health` health check.
@@ -139,3 +151,5 @@ Railway uses dynamic outbound IPs. If the deploy log reports `ERR_SSL_TLSV1_ALER
 The server now uses IPv4, TLS, connection retries, and a sanitized production error. It does not disable certificate verification.
 
 For a public deployment, Clerk authentication must be configured with valid keys and `ADMIN_CLERK_IDS` must contain the doctor's Clerk user ID. Without those values, protected checkout, patient, and admin operations are intentionally unavailable in production rather than falling back to insecure local access.
+
+If the public auth page says authentication is not configured, add `CLERK_SECRET_KEY` and `CLERK_PUBLISHABLE_KEY` to the Railway service Variables and redeploy. Keep `LOCAL_AUTH_BYPASS=false` on Railway.
