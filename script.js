@@ -10,6 +10,16 @@ function showToast(message) {
   window.setTimeout(() => toast.classList.remove("show"), 2600);
 }
 
+function showAuthenticationOptions(message, returnTo) {
+  const encodedReturn = encodeURIComponent(returnTo);
+  toast.innerHTML = `${message} <a href="/auth.html?returnTo=${encodedReturn}">Sign in</a> or <a href="/auth.html?returnTo=${encodedReturn}">sign up</a>.`;
+  toast.classList.add("show");
+  window.setTimeout(() => {
+    toast.classList.remove("show");
+    toast.textContent = "";
+  }, 7000);
+}
+
 async function loadRazorpay() {
   if (window.Razorpay) return;
   await new Promise((resolve, reject) => {
@@ -151,12 +161,14 @@ document.querySelector("#booking-form").addEventListener("submit", (event) => {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
   }).then(async (response) => {
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Unable to request appointment");
+    if (!response.ok) { const error = new Error(data.error || "Unable to request appointment"); error.status = response.status; throw error; }
     modal.classList.remove("open");
-    showToast(`Appointment requested. Payment order ${data.payment.id} is ready`);
-    openRazorpayCheckout(data, "appointment");
+    showToast("Appointment request received. We will contact you personally.");
     event.target.reset();
-  }).catch((error) => showToast(error.message));
+  }).catch((error) => {
+    if (error.status === 401) showAuthenticationOptions("Please sign in or sign up to book an appointment", `${location.pathname}${location.hash || "#book"}`);
+    else showToast(error.message);
+  });
 });
 document.querySelector("#contact-form").addEventListener("submit", (event) => {
   event.preventDefault();

@@ -28,7 +28,7 @@ const config = {
     user: process.env.SMTP_USER || "",
     password: process.env.SMTP_PASSWORD || "",
     from: process.env.MAIL_FROM || "hello@agastyaveda.in",
-    admin: process.env.ADMIN_EMAIL || "admin@agastyaveda.in"
+    admin: process.env.ADMIN_EMAIL || "agastyaaveda@gmail.com"
   },
   adminAccessEmail: envValue("ADMIN_ACCESS_EMAIL").toLowerCase() || "agastyaaveda@gmail.com",
   adminClerkIds: (process.env.ADMIN_CLERK_IDS || "").split(",").map((id) => id.trim()).filter(Boolean)
