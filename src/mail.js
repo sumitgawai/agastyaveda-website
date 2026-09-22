@@ -30,6 +30,7 @@ async function sendAdminNotification({ subject, text, form }) {
   });
   if (!response.ok) {
     const detail = await response.text();
+    console.error(`Formspree notification rejected for ${form || "unknown"}:`, response.status, detail);
     throw new Error(`Formspree notification failed (${response.status}): ${detail.slice(0, 200)}`);
   }
   return { formspree: true };

@@ -12,11 +12,8 @@ function showToast(message) {
 
 function showAuthenticationOptions(message, returnTo) {
   const encodedReturn = encodeURIComponent(returnTo);
-  toast.innerHTML = `${message} <a href="/auth.html?returnTo=${encodedReturn}">Sign in</a> or <a href="/auth.html?returnTo=${encodedReturn}">sign up</a>.`;
-  toast.classList.add("show");
-  window.setTimeout(() => {
-    window.location.assign(`/auth.html?returnTo=${encodedReturn}`);
-  }, 1000);
+  sessionStorage.setItem("agastyaveda-auth-notice", message);
+  window.location.assign(`/auth.html?returnTo=${encodedReturn}`);
 }
 
 async function loadRazorpay() {
