@@ -60,42 +60,19 @@ async function hydrateProducts() {
     const response = await fetch("/api/products");
     if (!response.ok) throw new Error("Unable to load products");
     const { products } = await response.json();
-    document.querySelectorAll(".product-card").forEach((card, index) => {
-      const product = products.find((entry) => entry.name === card.dataset.product) || products[index];
-      if (!product) {
-        card.remove();
-        return;
-      }
-      card.dataset.product = product.name;
-      card.dataset.price = product.price;
-      card.dataset.productId = product._id;
-      const title = card.querySelector(".product-info h3");
-      const description = card.querySelector(".product-info p");
-      const price = card.querySelector(".product-info strong");
-      if (title) title.textContent = product.name;
-      if (description) description.textContent = product.description;
-      if (price) price.textContent = `₹${Number(product.price).toLocaleString("en-IN")}`;
-      const image = card.querySelector(".product-image");
-      if (image) {
-        image.style.backgroundImage = product.imageUrl ? `url("${product.imageUrl.replace(/"/g, "%22")}")` : "";
-        image.classList.toggle("has-product-image", Boolean(product.imageUrl));
-        image.querySelectorAll("span, b").forEach((label) => { label.style.display = product.imageUrl ? "none" : ""; });
-      }
-      let pack = card.querySelector(".product-pack");
-      if (!pack) {
-        pack = document.createElement("small");
-        pack.className = "product-pack";
-        card.querySelector(".product-info").appendChild(pack);
-      }
-      pack.textContent = `${product.packageSize || ""} ${product.packageUnit || ""}`.trim();
-      if (!card.querySelector(".product-details-link")) {
-        const link = document.createElement("a");
-        link.className = "product-details-link";
-        link.href = `/product.html?id=${encodeURIComponent(product._id)}`;
-        link.textContent = "View details →";
-        card.insertBefore(link, card.querySelector(".add-button"));
-      }
-    });
+    const grid = document.querySelector(".shop .product-grid");
+    if (!grid) return;
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+    grid.innerHTML = products.map((product) => {
+      const imageStyle = product.imageUrl ? ` style="background-image:url('${escapeHtml(product.imageUrl).replace(/'/g, "&#39;")}')"` : "";
+      const fallbackLabels = product.imageUrl ? "" : `<span>AGASTYAVEDA</span><b>${escapeHtml(product.name).toUpperCase()}</b>`;
+      return `<article class="product-card" data-product="${escapeHtml(product.name)}" data-price="${Number(product.price)}" data-product-id="${escapeHtml(product._id)}">
+        <a class="product-image ${escapeHtml(product.category)} ${product.imageUrl ? "has-product-image" : ""}"${imageStyle} href="/product.html?id=${encodeURIComponent(product._id)}">${fallbackLabels}</a>
+        <div class="product-info"><div><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.description)}</p><small class="product-pack">${escapeHtml(`${product.packageSize || ""} ${product.packageUnit || ""}`.trim())}</small></div><strong>₹${Number(product.price).toLocaleString("en-IN")}</strong></div>
+        <a class="product-details-link" href="/product.html?id=${encodeURIComponent(product._id)}">View details →</a>
+        <button class="add-button" type="button">Add to bag <span>+</span></button>
+      </article>`;
+    }).join("");
   } catch (error) {
     console.warn("Using the static product preview:", error.message);
   }
@@ -122,14 +99,14 @@ function renderCart() {
 
 hydrateProducts();
 
-document.querySelectorAll(".add-button").forEach((button) => {
-  button.addEventListener("click", () => {
-    const product = button.closest(".product-card");
-    cart.push({ name: product.dataset.product, price: Number(product.dataset.price), productId: product.dataset.productId || "" });
-    localStorage.setItem("agastyaveda-cart", JSON.stringify(cart));
-    renderCart();
-    showToast(`${product.dataset.product} added to your bag`);
-  });
+document.querySelector(".shop .product-grid").addEventListener("click", (event) => {
+  const button = event.target.closest(".add-button");
+  if (!button) return;
+  const product = button.closest(".product-card");
+  cart.push({ name: product.dataset.product, price: Number(product.dataset.price), productId: product.dataset.productId || "", quantity: 1 });
+  localStorage.setItem("agastyaveda-cart", JSON.stringify(cart));
+  renderCart();
+  showToast(`${product.dataset.product} added to your bag`);
 });
 
 document.querySelector(".cart-button").addEventListener("click", () => {
