@@ -101,6 +101,10 @@ Set `AWS_REGION`, `S3_BUCKET`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` 
 
 The current document APIs intentionally expose metadata only. Medical files must not be stored in MongoDB or served from the public web root.
 
+## Product catalog management
+
+Admins can add and edit product name, description, category, price, stock, pack size, pack unit (`g`, `kg`, `ml`, `L`, or `piece`), publish status, and image URL from `/admin.html`. Product images currently use public HTTPS image URLs so no storage service is required. The URL is rendered on the shop, product detail, and recommendation cards. For private image uploads later, connect the same fields to an object storage upload flow.
+
 ## Current checkout behavior
 
 Razorpay is intentionally hidden and disabled. Checkout creates an `ORDER_RECEIVED` request, sends the complete order and delivery details to `ADMIN_EMAIL`, and sends a confirmation to the customer. The team contacts the customer personally for payment and delivery confirmation. When Razorpay is introduced later, set `RAZORPAY_ENABLED=true`, add the three Razorpay secrets, restore a payment UI, and test the verified callback and webhook lifecycle in staging first.

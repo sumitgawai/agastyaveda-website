@@ -233,9 +233,10 @@ function createApp() {
 
   app.put("/api/admin/products/:id", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      const { name, description, price, category, stock, published } = req.body;
-      if (!name || !description || !category || !Number.isFinite(Number(price)) || !Number.isInteger(Number(stock)) || Number(price) < 0 || Number(stock) < 0) return res.status(400).json({ error: "Valid product name, description, category, price and stock are required." });
-      const product = await store("products").updateOne({ _id: req.params.id }, { name, description, category, price: Number(price), stock: Number(stock), published: published !== false, updatedAt: new Date().toISOString() });
+      const { name, description, price, category, stock, packageSize, packageUnit, imageUrl, published } = req.body;
+      if (!name || !description || !category || !Number.isFinite(Number(price)) || !Number.isInteger(Number(stock)) || !Number.isFinite(Number(packageSize)) || Number(price) < 0 || Number(stock) < 0 || Number(packageSize) <= 0 || !["g", "kg", "ml", "L", "piece"].includes(packageUnit)) return res.status(400).json({ error: "Valid product details, price, stock, package size and unit are required." });
+      if (imageUrl && !/^https?:\/\/\S+$/i.test(imageUrl)) return res.status(400).json({ error: "Image URL must start with http:// or https://." });
+      const product = await store("products").updateOne({ _id: req.params.id }, { name, description, category, price: Number(price), stock: Number(stock), packageSize: Number(packageSize), packageUnit, imageUrl: imageUrl || "", published: published !== false, updatedAt: new Date().toISOString() });
       if (!product) return res.status(404).json({ error: "Product not found." });
       res.json({ product });
     } catch (error) { next(error); }
@@ -243,9 +244,10 @@ function createApp() {
 
   app.post("/api/admin/products", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      const { name, description, price, category, stock, published = true } = req.body;
-      if (!name || !description || !category || !Number.isFinite(Number(price)) || !Number.isInteger(Number(stock)) || Number(price) < 0 || Number(stock) < 0) return res.status(400).json({ error: "Valid product name, description, category, price and stock are required." });
-      const product = await store("products").insert({ name, description, category, price: Number(price), stock: Number(stock), published: Boolean(published), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      const { name, description, price, category, stock, packageSize, packageUnit, imageUrl = "", published = true } = req.body;
+      if (!name || !description || !category || !Number.isFinite(Number(price)) || !Number.isInteger(Number(stock)) || !Number.isFinite(Number(packageSize)) || Number(price) < 0 || Number(stock) < 0 || Number(packageSize) <= 0 || !["g", "kg", "ml", "L", "piece"].includes(packageUnit)) return res.status(400).json({ error: "Valid product details, price, stock, package size and unit are required." });
+      if (imageUrl && !/^https?:\/\/\S+$/i.test(imageUrl)) return res.status(400).json({ error: "Image URL must start with http:// or https://." });
+      const product = await store("products").insert({ name, description, category, price: Number(price), stock: Number(stock), packageSize: Number(packageSize), packageUnit, imageUrl, published: Boolean(published), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       res.status(201).json({ product });
     } catch (error) { next(error); }
   });

@@ -5,9 +5,9 @@ let database;
 let client;
 
 const seedProducts = [
-  { name: "Abhyanga Body Oil", description: "Warm · Grounding · Restorative", price: 899, category: "body-care", published: true, stock: 25 },
-  { name: "Golden Turmeric Latte", description: "Warming · Comforting · Daily", price: 499, category: "wellness", published: true, stock: 25 },
-  { name: "Calm Evening Tea", description: "Floral · Gentle · Restful", price: 549, category: "tea", published: true, stock: 25 }
+  { name: "Abhyanga Body Oil", description: "Warm · Grounding · Restorative", price: 899, packageSize: 100, packageUnit: "ml", category: "body-care", published: true, stock: 25, imageUrl: "" },
+  { name: "Golden Turmeric Latte", description: "Warming · Comforting · Daily", price: 499, packageSize: 250, packageUnit: "g", category: "wellness", published: true, stock: 25, imageUrl: "" },
+  { name: "Calm Evening Tea", description: "Floral · Gentle · Restful", price: 549, packageSize: 100, packageUnit: "g", category: "tea", published: true, stock: 25, imageUrl: "" }
 ];
 
 const seedAvailability = [
@@ -52,6 +52,7 @@ async function connectDatabase() {
     await database.collection("appointments").createIndex({ date: 1, time: 1 }, { unique: true });
     await database.collection("orders").createIndex({ createdAt: -1 });
     await database.collection("availability").createIndex({ day: 1 }, { unique: true });
+    await database.collection("products").updateMany({ packageSize: { $exists: false } }, { $set: { packageSize: 1, packageUnit: "piece", imageUrl: "" } });
     if (await database.collection("availability").countDocuments() === 0) {
       await database.collection("availability").insertMany(seedAvailability);
     }

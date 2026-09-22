@@ -75,6 +75,19 @@ async function hydrateProducts() {
       if (title) title.textContent = product.name;
       if (description) description.textContent = product.description;
       if (price) price.textContent = `₹${Number(product.price).toLocaleString("en-IN")}`;
+      const image = card.querySelector(".product-image");
+      if (image) {
+        image.style.backgroundImage = product.imageUrl ? `url("${product.imageUrl.replace(/"/g, "%22")}")` : "";
+        image.classList.toggle("has-product-image", Boolean(product.imageUrl));
+        image.querySelectorAll("span, b").forEach((label) => { label.style.display = product.imageUrl ? "none" : ""; });
+      }
+      let pack = card.querySelector(".product-pack");
+      if (!pack) {
+        pack = document.createElement("small");
+        pack.className = "product-pack";
+        card.querySelector(".product-info").appendChild(pack);
+      }
+      pack.textContent = `${product.packageSize || ""} ${product.packageUnit || ""}`.trim();
       if (!card.querySelector(".product-details-link")) {
         const link = document.createElement("a");
         link.className = "product-details-link";
