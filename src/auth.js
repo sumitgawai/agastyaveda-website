@@ -1,4 +1,4 @@
-const { clerkMiddleware, getAuth } = require("@clerk/express");
+const { clerkMiddleware, getAuth, clerkClient } = require("@clerk/express");
 const { config } = require("./config");
 
 function optionalAuth() {
@@ -19,13 +19,18 @@ function requireAuth(req, res, next) {
   next();
 }
 
-function requireAdmin(req, res, next) {
+async function requireAdmin(req, res, next) {
   const { userId } = req.auth || {};
   if (config.localAuthBypass && userId === "local-development-user") return next();
-  if (!userId || (config.adminClerkIds.length && !config.adminClerkIds.includes(userId))) {
-    return res.status(403).json({ error: "Administrator access is required." });
+  if (!userId) return res.status(403).json({ error: "Administrator access is required." });
+  try {
+    const user = await clerkClient.users.getUser(userId);
+    const emails = (user.emailAddresses || []).map((entry) => entry.emailAddress.toLowerCase());
+    if (!emails.includes(config.adminAccessEmail)) return res.status(403).json({ error: "This admin panel is restricted to the authorized administrator email." });
+    return next();
+  } catch (error) {
+    return next(error);
   }
-  next();
 }
 
 module.exports = { optionalAuth, requireAuth, requireAdmin };

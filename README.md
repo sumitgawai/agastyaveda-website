@@ -18,7 +18,8 @@ Set these values in `.env` or your deployment secret manager:
 
 - `MONGODB_URI` and `MONGODB_DB` for persistent data. Copy the complete URI from Atlas **Connect > Drivers**; a hostname alone is not enough.
 - `CLERK_SECRET_KEY` (`sk_...`) and `CLERK_PUBLISHABLE_KEY` (`pk_...`) for Clerk session verification
-- `ADMIN_CLERK_IDS` as a comma-separated allowlist of Clerk user IDs
+- `ADMIN_ACCESS_EMAIL=agastyaaveda@gmail.com` as the exact Clerk email allowed to use the admin panel
+- `ADMIN_CLERK_IDS` as an optional additional allowlist of Clerk user IDs
 - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, and set `RAZORPAY_ENABLED=true` only when live/test payment checkout is ready
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`, and `ADMIN_EMAIL`
 - `CLIENT_ORIGIN` to the deployed frontend origin
@@ -60,7 +61,7 @@ The backend never trusts prices from the browser: it resolves product names/IDs 
 - `GET /api/patient/appointments` (authenticated patient)
 - `GET /api/patient/orders` (authenticated patient)
 
-The admin dashboard is available at `/admin.html`. In production it requires a valid Clerk session and a user ID listed in `ADMIN_CLERK_IDS`.
+The admin dashboard is available at `/admin.html`. In production it requires a valid Clerk session whose verified email is exactly `ADMIN_ACCESS_EMAIL`; `ADMIN_CLERK_IDS` can be used as an additional allowlist.
 
 Patient sign-in and sign-up are available at `/auth.html`, with the patient portal at `/patient.html`. Product details and recommendations are available at `/product.html?id=PRODUCT_ID`. Checkout is available at `/checkout.html` and captures structured delivery details plus a Google Maps location pin before creating an order.
 

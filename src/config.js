@@ -30,6 +30,7 @@ const config = {
     from: process.env.MAIL_FROM || "hello@agastyaveda.in",
     admin: process.env.ADMIN_EMAIL || "admin@agastyaveda.in"
   },
+  adminAccessEmail: envValue("ADMIN_ACCESS_EMAIL").toLowerCase() || "agastyaaveda@gmail.com",
   adminClerkIds: (process.env.ADMIN_CLERK_IDS || "").split(",").map((id) => id.trim()).filter(Boolean)
 };
 
