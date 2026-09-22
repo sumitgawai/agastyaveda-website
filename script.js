@@ -15,9 +15,8 @@ function showAuthenticationOptions(message, returnTo) {
   toast.innerHTML = `${message} <a href="/auth.html?returnTo=${encodedReturn}">Sign in</a> or <a href="/auth.html?returnTo=${encodedReturn}">sign up</a>.`;
   toast.classList.add("show");
   window.setTimeout(() => {
-    toast.classList.remove("show");
-    toast.textContent = "";
-  }, 7000);
+    window.location.assign(`/auth.html?returnTo=${encodedReturn}`);
+  }, 1000);
 }
 
 async function loadRazorpay() {

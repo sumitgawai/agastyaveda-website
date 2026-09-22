@@ -51,7 +51,18 @@ function createApp() {
   app.use(express.static(path.join(__dirname, "..")));
 
   app.get("/api/health", (req, res) => res.json({ ok: true, service: "agastyaveda", database: Boolean(require("./db").collection("products")) }));
-  app.get("/api/config", (req, res) => res.json({ clerkEnabled: config.clerkEnabled && !config.localAuthBypass, localAuthBypass: config.localAuthBypass, clerkPublishableKey: config.clerkPublishableKey || null, googleMapsApiKey: config.googleMapsApiKey || null, razorpayEnabled: config.razorpayEnabled }));
+  app.get("/api/config", (req, res) => res.json({
+    clerkEnabled: config.clerkEnabled && !config.localAuthBypass,
+    localAuthBypass: config.localAuthBypass,
+    clerkPublishableKey: config.clerkPublishableKey || null,
+    googleMapsApiKey: config.googleMapsApiKey || null,
+    razorpayEnabled: config.razorpayEnabled,
+    notifications: {
+      messagesFormspree: Boolean(config.formspree.messagesEndpoint),
+      appointmentsFormspree: Boolean(config.formspree.appointmentsEndpoint),
+      ordersFormspree: Boolean(config.formspree.ordersEndpoint)
+    }
+  }));
 
   app.get("/api/products", async (req, res, next) => {
     try {
