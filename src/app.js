@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const path = require("path");
-const { optionalAuth, requireAuth, requireAdmin } = require("./auth");
+const { optionalAuth, requireAuth, requireAdmin, clerkClient, getAuth } = require("./auth");
 const { config } = require("./config");
 const { store } = require("./db");
 const { sendMail } = require("./mail");
@@ -51,6 +51,17 @@ function createApp() {
   app.use(express.static(path.join(__dirname, "..")));
 
   app.get("/api/health", (req, res) => res.json({ ok: true, service: "agastyaveda", database: Boolean(require("./db").collection("products")) }));
+  app.get("/api/session", async (req, res, next) => {
+    try {
+      const userId = config.localAuthBypass ? req.auth?.userId : getAuth(req).userId;
+      if (!userId) return res.json({ authenticated: false });
+      if (userId === "local-development-user") return res.json({ authenticated: true, user: { name: "Local preview user", email: "" } });
+      const user = await clerkClient.users.getUser(userId);
+      const email = user.emailAddresses?.find((entry) => entry.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || "";
+      res.json({ authenticated: true, user: { name: [user.firstName, user.lastName].filter(Boolean).join(" ") || email, email, imageUrl: user.imageUrl || "" } });
+    } catch (error) { next(error); }
+  });
+  app.post("/api/auth/sign-out", (req, res) => res.json({ ok: true }));
   app.get("/api/config", (req, res) => res.json({
     clerkEnabled: config.clerkEnabled && !config.localAuthBypass,
     localAuthBypass: config.localAuthBypass,

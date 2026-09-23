@@ -33,4 +33,4 @@ async function requireAdmin(req, res, next) {
   }
 }
 
-module.exports = { optionalAuth, requireAuth, requireAdmin };
+module.exports = { optionalAuth, requireAuth, requireAdmin, clerkClient };

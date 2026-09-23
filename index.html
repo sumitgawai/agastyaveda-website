@@ -17,7 +17,7 @@
         <span><strong>agastyaveda</strong><small>AYURVEDIC WELLNESS</small></span>
       </a>
       <nav class="desktop-nav" aria-label="Main navigation">
-        <a href="#about">About</a><a href="#consultation">Consultation</a><a href="#shop">Shop</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/patient.html">My space</a><a href="/auth.html">Sign in / Join</a>
+        <a href="#about">About</a><a href="#consultation">Consultation</a><a href="#shop">Shop</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><span data-auth-guest><a href="/auth.html">Sign In</a><a href="/auth.html">Sign Up</a></span><span data-auth-user hidden><a href="/patient.html"><img data-auth-avatar alt="" hidden /><span data-auth-name>My account</span><small data-auth-email></small></a> <button type="button" data-auth-sign-out>Sign Out</button></span>
       </nav>
       <div class="nav-actions">
         <button class="icon-btn cart-button" aria-label="Open shopping bag">Bag <span id="cart-count">0</span></button>
@@ -26,9 +26,10 @@
       </div>
     </div>
     <nav class="mobile-nav" aria-label="Mobile navigation">
-      <a href="#about">About</a><a href="#consultation">Consultation</a><a href="#shop">Shop</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/patient.html">My space</a><a href="/auth.html">Sign in / Join</a>
+      <a href="#about">About</a><a href="#consultation">Consultation</a><a href="#shop">Shop</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><span data-auth-guest><a href="/auth.html">Sign In</a><a href="/auth.html">Sign Up</a></span><span data-auth-user hidden><a href="/patient.html"><img data-auth-avatar alt="" hidden /><span data-auth-name>My account</span><small data-auth-email></small></a> <button type="button" data-auth-sign-out>Sign Out</button></span>
     </nav>
   </header>
+  <script defer src="auth-ui.js"></script>
 
   <main>
     <section class="hero" id="home">
