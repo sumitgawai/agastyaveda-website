@@ -110,17 +110,9 @@ Admins can add and edit product name, description, category, price, stock, pack 
 
 Razorpay is intentionally hidden and disabled. Checkout creates an `ORDER_RECEIVED` request, sends the complete order and delivery details to `ADMIN_EMAIL`, and sends a confirmation to the customer. The team contacts the customer personally for payment and delivery confirmation. When Razorpay is introduced later, set `RAZORPAY_ENABLED=true`, add the three Razorpay secrets, restore a payment UI, and test the verified callback and webhook lifecycle in staging first.
 
-### Formspree notifications
+### Notifications
 
-Create three Formspree forms and add their endpoints in the local `.env` file or Railway service Variables:
-
-```env
-FORMSPREE_MESSAGES_ENDPOINT=https://formspree.io/f/messages-form-id
-FORMSPREE_APPOINTMENTS_ENDPOINT=https://formspree.io/f/appointments-form-id
-FORMSPREE_ORDERS_ENDPOINT=https://formspree.io/f/orders-form-id
-```
-
-Use the messages form for contact notes, the appointments form for appointment requests, and the orders form for order requests. Set each Formspree recipient to `agastyaaveda@gmail.com`, then redeploy Railway. If an endpoint is empty, that notification uses the existing SMTP admin-email fallback. Customer confirmation emails continue to use SMTP.
+Contact notes, appointment requests, and order requests use the configured application notification flow. Keep `ADMIN_ACCESS_EMAIL=agastyaaveda@gmail.com` and the SMTP variables configured if email delivery is enabled. MongoDB-triggered notifications can be managed independently of the website application.
 
 ## Railway deployment
 
