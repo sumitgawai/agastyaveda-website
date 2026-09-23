@@ -71,10 +71,9 @@ async function hydrateProducts() {
     if (!grid) return;
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
     grid.innerHTML = products.map((product) => {
-      const imageStyle = product.imageUrl ? ` style="background-image:url('${escapeHtml(product.imageUrl).replace(/'/g, "&#39;")}')"` : "";
-      const fallbackLabels = product.imageUrl ? "" : `<span>AGASTYAVEDA</span><b>${escapeHtml(product.name).toUpperCase()}</b>`;
+      const imageContent = product.imageUrl ? `<img src="${escapeHtml(product.imageUrl)}" alt="${escapeHtml(product.name)}">` : `<span>AGASTYAVEDA</span><b>${escapeHtml(product.name).toUpperCase()}</b>`;
       return `<article class="product-card" data-product="${escapeHtml(product.name)}" data-price="${Number(product.price)}" data-product-id="${escapeHtml(product._id)}">
-        <a class="product-image ${escapeHtml(product.category)} ${product.imageUrl ? "has-product-image" : ""}"${imageStyle} href="/product.html?id=${encodeURIComponent(product._id)}">${fallbackLabels}</a>
+        <a class="product-image ${escapeHtml(product.category)} ${product.imageUrl ? "has-product-image" : ""}" href="/product.html?id=${encodeURIComponent(product._id)}">${imageContent}</a>
         <div class="product-info"><div><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.description)}</p><small class="product-pack">${escapeHtml(`${product.packageSize || ""} ${product.packageUnit || ""}`.trim())}</small></div><strong>₹${Number(product.price).toLocaleString("en-IN")}</strong></div>
         <a class="product-details-link" href="/product.html?id=${encodeURIComponent(product._id)}">View details →</a>
         <button class="add-button" type="button">Add to bag <span>+</span></button>
