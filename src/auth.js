@@ -8,11 +8,11 @@ function optionalAuth() {
 }
 
 function requireAuth(req, res, next) {
-  if (config.localAuthBypass || !config.clerkEnabled) {
-    if (!config.localAuthBypass && process.env.NODE_ENV === "production") return res.status(503).json({ error: "Authentication is not configured." });
+  if (config.localAuthBypass) {
     req.auth = { userId: "local-development-user" };
     return next();
   }
+  if (!config.clerkEnabled) return res.status(503).json({ error: "Authentication is not configured." });
   const { userId } = getAuth(req);
   if (!userId) return res.status(401).json({ error: "Sign in is required." });
   req.auth = { userId };
@@ -25,8 +25,9 @@ async function requireAdmin(req, res, next) {
   if (!userId) return res.status(403).json({ error: "Administrator access is required." });
   try {
     const user = await clerkClient.users.getUser(userId);
-    const emails = (user.emailAddresses || []).map((entry) => entry.emailAddress.toLowerCase());
-    if (!emails.includes(config.adminAccessEmail)) return res.status(403).json({ error: "This admin panel is restricted to the authorized administrator email." });
+    const matchingEmail = (user.emailAddresses || []).find((entry) => entry.emailAddress.toLowerCase() === config.adminAccessEmail);
+    if (!matchingEmail || matchingEmail.verification?.status !== "verified") return res.status(403).json({ error: "This admin panel requires the verified authorized administrator email." });
+    if (config.adminClerkIds.length && !config.adminClerkIds.includes(userId)) return res.status(403).json({ error: "This administrator account is not allowlisted." });
     return next();
   } catch (error) {
     return next(error);

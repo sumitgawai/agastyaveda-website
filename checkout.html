@@ -18,9 +18,9 @@
     <aside class="checkout-summary"><p class="eyebrow">Your order</p><div id="summary-items"></div><div class="summary-line"><span>Subtotal</span><strong id="subtotal">₹0</strong></div><div class="summary-line"><span>Delivery</span><strong id="shipping">₹0</strong></div><div class="summary-total"><span>Total</span><strong id="total">₹0</strong></div><p class="summary-note">Free delivery on orders above ₹1,500.</p></aside>
   </main>
   <script>
-    const cart=JSON.parse(localStorage.getItem("agastyaveda-cart")||"[]"), money=value=>`₹${Number(value).toLocaleString("en-IN")}`;
+    const cart=JSON.parse(localStorage.getItem("agastyaveda-cart")||"[]"), money=value=>`₹${Number(value).toLocaleString("en-IN")}`, escapeHtml=value=>String(value??"").replace(/[&<>"']/g,character=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]));
     const subtotal=cart.reduce((sum,item)=>sum+Number(item.price||0)*Number(item.quantity||1),0), shipping=subtotal>=1500||!subtotal?0:80;
-    document.querySelector("#summary-items").innerHTML=cart.length?cart.map(item=>`<div class="summary-item"><span>${item.name} × ${item.quantity||1}</span><strong>${money(Number(item.price||0)*Number(item.quantity||1))}</strong></div>`).join(""):'<p class="empty-portal">Your bag is empty.</p>';
+    document.querySelector("#summary-items").innerHTML=cart.length?cart.map(item=>`<div class="summary-item"><span>${escapeHtml(item.name)} × ${Number(item.quantity||1)}</span><strong>${money(Number(item.price||0)*Number(item.quantity||1))}</strong></div>`).join(""):'<p class="empty-portal">Your bag is empty.</p>';
     document.querySelector("#subtotal").textContent=money(subtotal);document.querySelector("#shipping").textContent=shipping?money(shipping):"Free";document.querySelector("#total").textContent=money(subtotal+shipping);
     let interactiveMap,marker;
     const setMap=()=>{const latitude=Number(document.querySelector("#latitude").value),longitude=Number(document.querySelector("#longitude").value);if(!latitude||!longitude)return;document.querySelector("#map").src=`https://www.google.com/maps?q=${latitude},${longitude}&output=embed`;if(interactiveMap&&marker){const position={lat:latitude,lng:longitude};marker.setPosition(position);interactiveMap.setCenter(position)}};

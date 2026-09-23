@@ -3,6 +3,7 @@ const cartCount = document.querySelector("#cart-count");
 const drawer = document.querySelector(".cart-drawer");
 const overlay = document.querySelector(".drawer-overlay");
 const toast = document.querySelector(".toast");
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
 
 function showToast(message) {
   toast.textContent = message;
@@ -93,7 +94,7 @@ function renderCart() {
     list.innerHTML = '<p class="empty-cart">Your bag is waiting for something lovely.</p>';
     return;
   }
-  list.innerHTML = cart.map((item, index) => `<div class="cart-item"><div>${item.name}<small>₹${item.price.toLocaleString("en-IN")}</small></div><button class="remove-item" data-index="${index}">Remove</button></div>`).join("");
+  list.innerHTML = cart.map((item, index) => `<div class="cart-item"><div>${escapeHtml(item.name)}<small>₹${Number(item.price).toLocaleString("en-IN")}</small></div><button class="remove-item" data-index="${index}">Remove</button></div>`).join("");
   list.querySelectorAll(".remove-item").forEach((button) => {
     button.addEventListener("click", () => {
       cart.splice(Number(button.dataset.index), 1);
