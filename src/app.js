@@ -125,7 +125,7 @@ function createApp() {
     try {
       const { items, email, address } = req.body;
       if (!Array.isArray(items) || !items.length || !email || !address) return res.status(400).json({ error: "Items, email and address are required." });
-      if (typeof address !== "object" || !address.name || !address.line1 || !address.city || !address.state || !address.postalCode || !address.phone || !address.latitude || !address.longitude) return res.status(400).json({ error: "Complete delivery details, phone number and map location are required." });
+      if (typeof address !== "object" || !address.name || !address.line1 || !address.city || !address.state || !address.postalCode || !address.phone) return res.status(400).json({ error: "Complete delivery details and phone number are required." });
       const products = await store("products").findMany({ published: true });
       const lineItems = items.map((item) => {
         const product = products.find((entry) => String(entry._id) === String(item.productId) || entry.name === item.name);
@@ -137,7 +137,7 @@ function createApp() {
       const amount = subtotal + shipping;
       const order = await store("orders").insert({ userId: req.auth.userId, email, address, items: lineItems, subtotal, shipping, amount, status: "ORDER_RECEIVED", createdAt: new Date().toISOString() });
       const summary = lineItems.map((item) => `${item.name} x ${item.quantity} — ₹${item.price * item.quantity}`).join("\n");
-      const details = `Order ID: ${order._id}\nCustomer email: ${email}\nName: ${address.name}\nPhone: ${address.phone}\nAddress: ${address.line1}, ${address.city}, ${address.state} - ${address.postalCode}\nMap coordinates: ${address.latitude}, ${address.longitude}\n\nItems:\n${summary}\n\nSubtotal: ₹${subtotal}\nDelivery: ${shipping ? `₹${shipping}` : "Free"}\nTotal: ₹${amount}`;
+      const details = `Order ID: ${order._id}\nCustomer email: ${email}\nName: ${address.name}\nPhone: ${address.phone}\nAddress: ${address.line1}, ${address.city}, ${address.state} - ${address.postalCode}\nMap coordinates: ${address.latitude && address.longitude ? `${address.latitude}, ${address.longitude}` : "Not provided"}\n\nItems:\n${summary}\n\nSubtotal: ₹${subtotal}\nDelivery: ${shipping ? `₹${shipping}` : "Free"}\nTotal: ₹${amount}`;
       await sendAdminNotification({ form: "ordersEndpoint", subject: `New Agastyaveda order ${order._id}`, text: details });
       await sendMail({ to: email, subject: "Agastyaveda order received", text: `Thank you. We received order ${order._id}. Our team will contact you personally to confirm availability, delivery, and payment.\n\n${details}` });
       res.status(201).json({ order, paymentAvailable: false });
@@ -209,7 +209,7 @@ function createApp() {
   app.post("/api/patient/addresses", requireAuth, async (req, res, next) => {
     try {
       const { label, name, line1, city, state, postalCode, phone, latitude, longitude } = req.body;
-      if (!label || !name || !line1 || !city || !state || !postalCode || !phone || !latitude || !longitude) return res.status(400).json({ error: "Complete address and map location are required." });
+      if (!label || !name || !line1 || !city || !state || !postalCode || !phone) return res.status(400).json({ error: "Complete address and phone number are required." });
       const address = await store("addresses").insert({ userId: req.auth.userId, label, name, line1, city, state, postalCode, phone, latitude, longitude, createdAt: new Date().toISOString() });
       res.status(201).json({ address });
     } catch (error) { next(error); }

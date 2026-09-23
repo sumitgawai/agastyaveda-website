@@ -154,9 +154,14 @@ document.querySelector("#booking-form").addEventListener("submit", (event) => {
     email: event.target.querySelector('input[type="email"]').value,
     phone: event.target.querySelector('input[type="tel"]').value
   };
-  fetch("/api/appointments", {
+  const requestAppointment = () => fetch("/api/appointments", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-  }).then(async (response) => {
+  });
+  requestAppointment().then(async (response) => {
+    if (response.status === 401) {
+      await new Promise((resolve) => window.setTimeout(resolve, 1500));
+      response = await requestAppointment();
+    }
     const data = await response.json();
     if (!response.ok) { const error = new Error(data.error || "Unable to request appointment"); error.status = response.status; throw error; }
     modal.classList.remove("open");
